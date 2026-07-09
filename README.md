@@ -90,20 +90,35 @@ npm run dev               # http://localhost:3000
 
 Sign in at `/login` — **Create account** self-serves users; the **Admin** tab uses the seeded account. Open `/chat` in two browsers (or a normal + private window) with different accounts to watch live broadcast, presence, and moderation.
 
-## Deploying to Railway
+## Deploying
 
-Railway is the right target here: it supports **WebSockets** and offers **managed MySQL** (Render has no MySQL; Vercel/Netlify can't host a persistent socket server at all).
+Live demo: **https://relay-vwyb.onrender.com** — free tier, so it sleeps after ~15 min idle and takes 30-60s to wake on the first request.
+
+Either target needs a host with persistent WebSockets (rules out Vercel/Netlify's serverless model) plus a managed MySQL instance.
+
+### Render + Aiven (free, no credit card — what the live demo runs on)
+
+1. Push to GitHub, create a Render **Web Service from the repo** (this repo includes a `render.yaml` blueprint).
+2. Create an Aiven MySQL service on the free plan — only available on **DigitalOcean/UpCloud** clouds, not AWS/GCP/Azure: `avn service create <name> --service-type mysql --plan free-1-1gb --cloud do-<region>`.
+3. On the Render service → Environment:
+   - `MYSQL_URL` = Aiven's service URI with `?ssl-mode=REQUIRED` appended
+   - `DB_SSL` = `true` (managed MySQL requires TLS; `env.js` also honors `ssl-mode` inside `MYSQL_URL` itself)
+   - `JWT_SECRET` = a long random string
+   - `NODE_ENV` = `production`
+   - `BASE_URL` and `CORS_ORIGIN` = your Render public URL
+   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME`
+4. Once: run `npm run db:init && npm run db:seed` locally with `MYSQL_URL`/`DB_SSL` pointed at Aiven (`db:init` skips `CREATE DATABASE` gracefully if the plan doesn't grant that privilege — Aiven's free tier pre-creates `defaultdb`).
+5. `trust proxy` is set, so secure cookies and real IPs work behind Render's proxy. The client picks `wss://` automatically on HTTPS.
+
+### Railway (paid, single-dashboard setup)
+
+Railway bundles WebSockets and managed MySQL in one place, trading the permanent free tier for simplicity.
 
 1. Push to GitHub, create a Railway project **from the repo**.
 2. Add the **MySQL** plugin.
-3. On the app service → Variables:
-   - `MYSQL_URL` = `${{ MySQL.MYSQL_URL }}` (replaces all `DB_*` vars)
-   - `JWT_SECRET` = a long random string
-   - `NODE_ENV` = `production`
-   - `BASE_URL` and `CORS_ORIGIN` = your Railway public URL
-   - `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME`
+3. Same env vars as above, but `MYSQL_URL` = `${{ MySQL.MYSQL_URL }}` — no `DB_SSL`/`ssl-mode` needed, Railway's internal MySQL doesn't require TLS.
 4. Once: `railway run npm run db:init && railway run npm run db:seed`
-5. Railway starts `npm start`. `trust proxy` is set, so secure cookies and real IPs work behind the proxy. The client picks `wss://` automatically on HTTPS.
+5. Railway starts `npm start` automatically.
 
 **Known limitation (and a great interview answer):** the ring buffers and presence map live in the process, so they reset on redeploy and aren't shared across instances. Scaling past one instance means moving them to Redis with pub/sub for cross-instance broadcast. Everything else is stateless.
 
