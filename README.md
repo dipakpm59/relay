@@ -2,6 +2,13 @@
 
 Node.js · Express · `ws` · MySQL — no Redis, no ORM, no Socket.IO. Raw parameterized SQL via `mysql2`, a **hand-built O(1) ring buffer** in front of MySQL on the message hot path, **role-based JWT auth** in HttpOnly cookies (verified at the WebSocket handshake too) with account lockout and an admin **audit log**, Chart.js analytics, QR-code room invites, and fully reversible moderation.
 
+**Live demo:** https://relay-vwyb.onrender.com _(free tier — sleeps after ~15 min idle, first load takes 30-60s to wake up)_
+
+| | |
+|---|---|
+| ![Landing page](docs/screenshots/01-landing.png) | ![Live chat with two users](docs/screenshots/03-chat.png) |
+| ![Admin dashboard](docs/screenshots/05-admin.png) | ![Analytics charts](docs/screenshots/04-analytics.png) |
+
 ## Architecture
 
 Layered MVC + Service pattern, with a WebSocket gateway that reuses the same services:
