@@ -155,4 +155,4 @@ Services are tested without Express, MySQL, or a socket by monkey-patching the m
 
 ## License
 
-MIT
+[MIT](LICENSE)
