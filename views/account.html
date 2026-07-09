@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My account — Relay</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/css/relay.css" />
+</head>
+<body>
+  <nav class="navbar glass px-3 mb-4">
+    <div class="container">
+      <a class="brand-mark" href="/">relay</a>
+      <div id="navLinks" class="d-flex gap-3 align-items-center"></div>
+    </div>
+  </nav>
+
+  <main class="container" style="max-width: 1040px">
+    <h1 class="h3 fw-bold mt-2">My account</h1>
+    <p class="text-soft" id="whoami"></p>
+
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-md-3"><div class="glass p-3"><div class="stat-n" id="uToday">–</div><div class="stat-l">Messages today</div></div></div>
+      <div class="col-6 col-md-3"><div class="glass p-3"><div class="stat-n" id="uLimit">–</div><div class="stat-l">Daily limit</div></div></div>
+      <div class="col-6 col-md-3"><div class="glass p-3"><div class="stat-n" id="uTotal">–</div><div class="stat-l">Total messages</div></div></div>
+      <div class="col-6 col-md-3"><div class="glass p-3"><div class="stat-n" id="uRooms">–</div><div class="stat-l">My rooms</div></div></div>
+    </div>
+
+    <h2 class="h5">My rooms</h2>
+    <div class="glass p-2 table-responsive mb-4">
+      <table class="table align-middle m-0">
+        <thead><tr><th>Room</th><th>Role</th><th>Members</th><th>Status</th><th></th></tr></thead>
+        <tbody id="roomsBody"><tr><td colspan="5" class="text-soft">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <p class="small d-none" id="msg"></p>
+
+    <div class="row g-3 mb-5">
+      <div class="col-md-6">
+        <div class="glass p-4 h-100">
+          <h3 class="h6">Display name</h3>
+          <input type="text" id="newName" class="form-control mb-2" />
+          <button class="btn btn-outline-glass btn-sm" id="saveName">Save name</button>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="glass p-4 h-100">
+          <h3 class="h6">Change password</h3>
+          <input type="password" id="curPw" class="form-control mb-2" placeholder="Current password" autocomplete="current-password" />
+          <input type="password" id="newPw" class="form-control mb-2" placeholder="New password (8+, letter + number)" autocomplete="new-password" />
+          <button class="btn btn-outline-glass btn-sm" id="savePw">Update password</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/account.js"></script>
+</body>
+</html>
