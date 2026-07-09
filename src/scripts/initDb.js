@@ -14,12 +14,19 @@ async function main() {
     port: env.db.port,
     user: env.db.user,
     password: env.db.password,
+    ssl: env.db.ssl,
     multipleStatements: true,
   });
-  await server.query(
-    `CREATE DATABASE IF NOT EXISTS \`${env.db.database}\`
-     CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
-  );
+  try {
+    await server.query(
+      `CREATE DATABASE IF NOT EXISTS \`${env.db.database}\`
+       CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`
+    );
+  } catch (err) {
+    // Managed providers (e.g. Aiven's free tier) pre-create one database and
+    // don't grant CREATE DATABASE — fine, we'll just use it as-is.
+    console.log(`(skipping CREATE DATABASE: ${err.message})`);
+  }
   await server.end();
 
   const conn = await mysql.createConnection({ ...env.db, multipleStatements: true });

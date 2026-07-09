@@ -1,0 +1,48 @@
+services:
+  - type: web
+    name: relay
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: MAX_LOGIN_ATTEMPTS
+        value: 5
+      - key: LOCKOUT_MINUTES
+        value: 15
+      - key: BUFFER_CAPACITY
+        value: 200
+      - key: DAILY_MESSAGE_LIMIT
+        value: 500
+      - key: MESSAGE_MAX_LENGTH
+        value: 2000
+      - key: RATE_WINDOW_MINUTES
+        value: 15
+      - key: RATE_MAX_GENERAL
+        value: 300
+      - key: RATE_MAX_ROOMS
+        value: 20
+      - key: RATE_MAX_AUTH
+        value: 10
+      - key: DB_SSL
+        value: 'true'
+      # Fill these in after the first deploy (Render assigns your URL, and
+      # MYSQL_URL comes from your Aiven service's "Service URI"):
+      - key: MYSQL_URL
+        sync: false
+      - key: BASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: ADMIN_NAME
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

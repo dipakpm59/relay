@@ -5,16 +5,22 @@ const int = (v, fallback) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-/** Railway: set MYSQL_URL and it overrides the individual DB_* vars. */
+/** Managed MySQL providers (Aiven, PlanetScale, etc.) require TLS. */
+const sslConfig = () =>
+  process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : undefined;
+
+/** Railway/Aiven: set MYSQL_URL and it overrides the individual DB_* vars. */
 function dbConfig() {
   if (process.env.MYSQL_URL) {
     const u = new URL(process.env.MYSQL_URL);
+    const sslMode = u.searchParams.get('ssl-mode') || u.searchParams.get('sslmode');
     return {
       host: u.hostname,
       port: int(u.port, 3306),
       user: decodeURIComponent(u.username),
       password: decodeURIComponent(u.password),
       database: u.pathname.replace(/^\//, '') || process.env.DB_NAME || 'relay',
+      ssl: sslMode && sslMode.toUpperCase() !== 'DISABLED' ? sslConfig() || { rejectUnauthorized: false } : sslConfig(),
     };
   }
   return {
@@ -23,6 +29,7 @@ function dbConfig() {
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'relay',
+    ssl: sslConfig(),
   };
 }
 
