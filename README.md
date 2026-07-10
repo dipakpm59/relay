@@ -53,7 +53,7 @@
 
 ## Live Demo
 
-**https://relay-vwyb.onrender.com** — free-tier hosting (Render + Aiven MySQL), so it sleeps after ~15 min idle and the first request takes 30-60s to wake up. Everything after that is live: registration, real-time chat between two browser sessions, admin moderation, analytics.
+**https://relay-vwyb.onrender.com** — free-tier hosting (Render web service + Railway MySQL), so it sleeps after ~15 min idle and the first request takes 30-60s to wake up. Everything after that is live: registration, real-time chat between two browser sessions, admin moderation, analytics.
 
 Sign in at `/login` — **Create account** self-serves regular users; the **Admin** tab uses the seeded admin account.
 
@@ -199,7 +199,7 @@ See [.env.example](.env.example) for the complete, always-up-to-date list with d
 | `PORT`, `BASE_URL`, `CORS_ORIGIN` | Server port and public URL(s) |
 | `DB_HOST` / `DB_PORT` / `DB_USER` / `DB_PASSWORD` / `DB_NAME` | Local MySQL connection (ignored if `MYSQL_URL` is set) |
 | `MYSQL_URL` | Single connection string — overrides all `DB_*` vars (used on Render/Railway) |
-| `DB_SSL` | Set `true` for managed MySQL providers that require TLS (e.g. Aiven) |
+| `DB_SSL` | Set `true` for managed MySQL providers that require TLS (e.g. Aiven); `false` for Railway |
 | `JWT_SECRET`, `JWT_EXPIRES_IN` | Signing key and session lifetime |
 | `MAX_LOGIN_ATTEMPTS`, `LOCKOUT_MINUTES` | Account lockout thresholds |
 | `ADMIN_NAME` / `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Used once by `npm run db:seed` |
@@ -211,28 +211,30 @@ See [.env.example](.env.example) for the complete, always-up-to-date list with d
 
 Either target needs a host with persistent WebSockets (rules out Vercel/Netlify's serverless model) plus a managed MySQL instance.
 
-### Render + Aiven (free, no credit card — what the live demo runs on)
+### Render + Railway MySQL (free, what the live demo runs on)
 
 1. Push to GitHub, create a Render **Web Service from the repo** (this repo includes a `render.yaml` blueprint).
-2. Create an Aiven MySQL service on the free plan — only available on **DigitalOcean/UpCloud** clouds, not AWS/GCP/Azure: `avn service create <name> --service-type mysql --plan free-1-1gb --cloud do-<region>`.
+2. Create a Railway project, add the **MySQL** plugin (`railway init` + `railway add --database mysql`), and use its **public** connection string — Render is a separate platform from Railway, so the private/internal URL won't resolve from it.
 3. On the Render service → Environment:
-   - `MYSQL_URL` = Aiven's service URI with `?ssl-mode=REQUIRED` appended
-   - `DB_SSL` = `true` (managed MySQL requires TLS; `env.js` also honors `ssl-mode` inside `MYSQL_URL` itself)
+   - `MYSQL_URL` = Railway MySQL's public connection string (`MYSQL_PUBLIC_URL` from `railway variables`)
+   - `DB_SSL` = `false` (Railway's MySQL doesn't require TLS)
    - `JWT_SECRET` = a long random string
    - `NODE_ENV` = `production`
    - `BASE_URL` and `CORS_ORIGIN` = your Render public URL
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` / `ADMIN_NAME`
-4. Once: run `npm run db:init && npm run db:seed` locally with `MYSQL_URL`/`DB_SSL` pointed at Aiven (`db:init` skips `CREATE DATABASE` gracefully if the plan doesn't grant that privilege — Aiven's free tier pre-creates `defaultdb`).
+4. Once: `railway run -- npm run db:init && railway run -- npm run db:seed` (injects Railway's env vars into the local process to reach the DB).
 5. `trust proxy` is set, so secure cookies and real IPs work behind Render's proxy. The client picks `wss://` automatically on HTTPS.
 
-### Railway (paid, single-dashboard setup)
+**Note:** Railway's MySQL plugin runs on trial credit, not a permanent free tier — keep an eye on usage. Aiven MySQL (also free, TLS-required) is a drop-in alternative: set `MYSQL_URL` to its service URI with `?ssl-mode=REQUIRED` and `DB_SSL=true` instead.
 
-Railway bundles WebSockets and managed MySQL in one place, trading the permanent free tier for simplicity.
+### Railway all-in-one (paid, single-dashboard setup)
+
+Railway can also host the app itself alongside the database, trading the free tier for one-dashboard simplicity.
 
 1. Push to GitHub, create a Railway project **from the repo**.
 2. Add the **MySQL** plugin.
-3. Same env vars as above, but `MYSQL_URL` = `${{ MySQL.MYSQL_URL }}` — no `DB_SSL`/`ssl-mode` needed, Railway's internal MySQL doesn't require TLS.
-4. Once: `railway run npm run db:init && railway run npm run db:seed`
+3. Same env vars as above, but `MYSQL_URL` = `${{ MySQL.MYSQL_URL }}` (internal URL works here since both services share Railway's private network) — no `DB_SSL`/`ssl-mode` needed.
+4. Once: `railway run -- npm run db:init && railway run -- npm run db:seed`
 5. Railway starts `npm start` automatically.
 
 **Known limitation (and a great interview answer):** the ring buffers and presence map live in the process, so they reset on redeploy and aren't shared across instances. Scaling past one instance means moving them to Redis with pub/sub for cross-instance broadcast. Everything else is stateless.
